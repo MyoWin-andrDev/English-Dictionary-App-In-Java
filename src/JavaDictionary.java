@@ -1,3 +1,5 @@
+import javazoom.jl.decoder.JavaLayerException;
+import javazoom.jl.player.Player;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JsonArray;
@@ -5,10 +7,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import javax.sound.sampled.*;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Scanner;
@@ -68,30 +67,36 @@ public class JavaDictionary {
         try {
             JSONParser parser = new JSONParser();
             JSONArray jsonArray = (JSONArray) parser.parse(content.toString());
+            //Word
             JSONObject jsonObj = (JSONObject) jsonArray.get(0);
-            String word = (String) jsonObj.get("word");//word
+            String word = (String) jsonObj.get("word");
             System.out.println(word);
+            //
+            //Phonetic Text And Audio
             JSONArray phonetics = (JSONArray) jsonObj.get("phonetics");
             JSONObject phoneticObj = (JSONObject) phonetics.get(0);
             System.out.println(phoneticObj);
-            String text = (String) phoneticObj.get("text");//phonetic Text in UK
+            String text = (String) phoneticObj.get("text");//phonetic Text
             System.out.println(text);
+            String audio = (String) phoneticObj.get("audio");//audio String
+            System.out.println(audio);
+            runAudio(audio);
 
 
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
     }
-    public static void runAudio(File audio){
+    public static void runAudio(String audio){
         try {
-            AudioInputStream audiStream = AudioSystem.getAudioInputStream(audio);
-            Clip clip = AudioSystem.getClip();
-            clip.open(audiStream);
-        } catch (UnsupportedAudioFileException e) {
-            throw new RuntimeException(e);
+            URL audioURL = new URL(audio);
+            InputStream inputStream = audioURL.openStream();
+            BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+            Player player = new Player(bufferedInputStream);
+            player.play();
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } catch (LineUnavailableException e) {
+        } catch (JavaLayerException e) {
             throw new RuntimeException(e);
         }
 

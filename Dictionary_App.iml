@@ -25,5 +25,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" exported="" name="JLayer1.0" level="project" />
   </component>
 </module>
