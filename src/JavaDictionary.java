@@ -79,8 +79,22 @@ public class JavaDictionary {
             String text = (String) phoneticObj.get("text");//phonetic Text
             System.out.println(text);
             String audio = (String) phoneticObj.get("audio");//audio String
-            System.out.println(audio);
             runAudio(audio);
+
+            //Meanings
+            JSONArray meanings = (JSONArray) jsonObj.get("meanings");
+            //Index Zero
+            JSONObject meaningsIndexZero = (JSONObject) meanings.get(0);
+            String partOfSpeech = (String) meaningsIndexZero.get("partOfSpeech");
+            System.out.println(partOfSpeech);
+            JSONArray definitions = (JSONArray) meaningsIndexZero.get("definitions");
+            for(int i = 0 ; i < definitions.size() ; i++){
+                JSONObject defObj = (JSONObject) definitions.get(i);
+                String defString = (String) defObj.get("definition");
+                System.out.println("Definition " + (i+1) + " : " + defString);
+            }
+            //
+            //Index One
 
 
         } catch (ParseException e) {
