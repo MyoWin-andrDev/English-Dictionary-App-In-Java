@@ -78,8 +78,8 @@ public class JavaDictionary {
             System.out.println(phoneticObj);
             String text = (String) phoneticObj.get("text");//phonetic Text
             System.out.println(text);
-            String audio = (String) phoneticObj.get("audio");//audio String
-            runAudio(audio);
+           // String audio = (String) phoneticObj.get("audio");//audio String
+            //runAudio(audio);l
 
             //Meanings
             JSONArray meanings = (JSONArray) jsonObj.get("meanings");
@@ -95,12 +95,50 @@ public class JavaDictionary {
             }
             //
             //Index One
+            JSONObject meaningsIndexOne = (JSONObject) meanings.get(1);
+            String partOfSpeech1 = (String) meaningsIndexOne.get("partOfSpeech");
+            System.out.println(partOfSpeech1);
+            JSONArray definitions1 = (JSONArray) meaningsIndexOne.get("definitions");
+            for(int i = 0 ; i < definitions1.size() ; i++){
+                JSONObject defObj = (JSONObject) definitions1.get(i);
+                String defString = (String) defObj.get("definition");
+                System.out.println("Definition " + (i+1) + " : " + defString);
+            }
 
 
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
     }
+
+
+    //Get Audio
+    public static void getAudio(StringBuilder content){
+        try {
+            JSONParser parser = new JSONParser();
+            JSONArray jsonArray = null;
+            jsonArray = (JSONArray) parser.parse(content.toString());
+
+            JSONObject jsonObj = (JSONObject) jsonArray.get(0);
+            JSONArray phonetics = (JSONArray) jsonObj.get("phonetics");
+            for(int i = 0; i < phonetics.size() ; i++){
+                JSONObject phoneticObj = (JSONObject) phonetics.get(i);
+                String audio = null;
+                if(phoneticObj.containsKey("audio")){
+                    audio = (String) phoneticObj.get("audio");
+                }
+                if(audio != null){
+                    runAudio(audio);
+                }
+                else{
+                    System.out.println("Audio not found for this word");
+                }
+            }
+            } catch (ParseException e) {
+            throw new RuntimeException(e);
+            }
+        }
+
     public static void runAudio(String audio){
         try {
             URL audioURL = new URL(audio);
@@ -108,9 +146,7 @@ public class JavaDictionary {
             BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
             Player player = new Player(bufferedInputStream);
             player.play();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (JavaLayerException e) {
+        } catch (IOException | JavaLayerException e) {
             throw new RuntimeException(e);
         }
 
