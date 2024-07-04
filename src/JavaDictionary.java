@@ -15,51 +15,51 @@ import java.util.Scanner;
 public class JavaDictionary {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        String word ;
-        do{
+        String word;
+        do {
             System.out.println("**___Welcome___To___Java___Dictionary___***");
             System.out.print("Enter a word : ");
             word = scanner.nextLine();
-            if(word.equalsIgnoreCase("No")) break;
+            if (word.equalsIgnoreCase("No")) break;
             readData(word);
 
 
-        }while (!word.equalsIgnoreCase("No"));
+        } while (!word.equalsIgnoreCase("No"));
     }
 
-    public static void readData(String word){
-            //API URL
-            String urlString = "https://api.dictionaryapi.dev/api/v2/entries/en/"+word;
+    public static void readData(String word) {
+        //API URL
+        String urlString = "https://api.dictionaryapi.dev/api/v2/entries/en/" + word;
 
-            try {
-                //Fetch API
-                URL url = new URL(urlString);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                //Requesting to Get data
-                conn.setRequestMethod("GET");
-                //Finished fetching
+        try {
+            //Fetch API
+            URL url = new URL(urlString);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            //Requesting to Get data
+            conn.setRequestMethod("GET");
+            //Finished fetching
 
-                //Start Reading API
-                int respondCode = conn.getResponseCode();
-                System.out.println(respondCode);
-                if(respondCode == 200){
-                    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    String inputLine;
-                    StringBuilder content = new StringBuilder();
-                    while((inputLine = in.readLine()) != null){
-                        content.append(inputLine);
-                    }
-                    in.close();
-                    conn.disconnect();
-                    getData(content);
-                    System.out.println("Successful");
-                }else{
-                    System.out.println("Word Not Found! Try Another.");
+            //Start Reading API
+            int respondCode = conn.getResponseCode();
+            System.out.println(respondCode);
+            if (respondCode == 200) {
+                BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                String inputLine;
+                StringBuilder content = new StringBuilder();
+                while ((inputLine = in.readLine()) != null) {
+                    content.append(inputLine);
                 }
-
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                in.close();
+                conn.disconnect();
+                getData(content);
+                System.out.println("Successful");
+            } else {
+                System.out.println("Word Not Found! Try Another.");
             }
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
@@ -78,33 +78,8 @@ public class JavaDictionary {
             System.out.println(phoneticObj);
             String text = (String) phoneticObj.get("text");//phonetic Text
             System.out.println(text);
-           // String audio = (String) phoneticObj.get("audio");//audio String
-            //runAudio(audio);l
-
-            //Meanings
-            JSONArray meanings = (JSONArray) jsonObj.get("meanings");
-            //Index Zero
-            JSONObject meaningsIndexZero = (JSONObject) meanings.get(0);
-            String partOfSpeech = (String) meaningsIndexZero.get("partOfSpeech");
-            System.out.println(partOfSpeech);
-            JSONArray definitions = (JSONArray) meaningsIndexZero.get("definitions");
-            for(int i = 0 ; i < definitions.size() ; i++){
-                JSONObject defObj = (JSONObject) definitions.get(i);
-                String defString = (String) defObj.get("definition");
-                System.out.println("Definition " + (i+1) + " : " + defString);
-            }
-            //
-            //Index One
-            JSONObject meaningsIndexOne = (JSONObject) meanings.get(1);
-            String partOfSpeech1 = (String) meaningsIndexOne.get("partOfSpeech");
-            System.out.println(partOfSpeech1);
-            JSONArray definitions1 = (JSONArray) meaningsIndexOne.get("definitions");
-            for(int i = 0 ; i < definitions1.size() ; i++){
-                JSONObject defObj = (JSONObject) definitions1.get(i);
-                String defString = (String) defObj.get("definition");
-                System.out.println("Definition " + (i+1) + " : " + defString);
-            }
-
+            getAudio(jsonObj);
+            getDefinition(content);
 
         } catch (ParseException e) {
             throw new RuntimeException(e);
@@ -113,43 +88,63 @@ public class JavaDictionary {
 
 
     //Get Audio
-    public static void getAudio(StringBuilder content){
+    public static void getAudio(JSONObject jsonObj) {
+
+        JSONArray phonetics = (JSONArray) jsonObj.get("phonetics");
+        for (int i = 0; i < phonetics.size(); i++) {
+            JSONObject phoneticObj = (JSONObject) phonetics.get(i);
+            String audio = null;
+            if (phoneticObj.containsKey("audio")) {
+                audio = (String) phoneticObj.get("audio");
+            }
+            if (audio != null && !audio.isEmpty()) {
+                runAudio(audio);
+            } else {
+                System.out.println("Audio not found for this word");
+            }
+        }
+    }
+
+    public static void runAudio(String audio) {
+        if(audio != null && !audio.isEmpty()) {
+            try {
+                URL audioURL = new URL(audio);
+                InputStream inputStream = audioURL.openStream();
+                BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+                Player player = new Player(bufferedInputStream);
+                player.play();
+            } catch (IOException | JavaLayerException e) {
+                throw new RuntimeException(e);
+            }
+        }else{
+            System.out.println("Audio URL is null or empty, unable to play audio.");
+        }
+
+    }
+
+    //Get Definitions
+    public static void getDefinition(StringBuilder content) {
         try {
             JSONParser parser = new JSONParser();
-            JSONArray jsonArray = null;
-            jsonArray = (JSONArray) parser.parse(content.toString());
+            JSONArray jsonArray = (JSONArray) parser.parse(content.toString());
+            JSONObject jsonObj = (JSONObject) jsonArray.getFirst();
+            JSONArray meanings = (JSONArray) jsonObj.get("meanings");
+            for (int i = 0; i < meanings.size(); i++) {
+                JSONObject index = (JSONObject) meanings.get(i);
+                String partOfSpeech = (String) index.get("partOfSpeech");
+                System.out.println("Part Of Speech : " + partOfSpeech);
 
-            JSONObject jsonObj = (JSONObject) jsonArray.get(0);
-            JSONArray phonetics = (JSONArray) jsonObj.get("phonetics");
-            for(int i = 0; i < phonetics.size() ; i++){
-                JSONObject phoneticObj = (JSONObject) phonetics.get(i);
-                String audio = null;
-                if(phoneticObj.containsKey("audio")){
-                    audio = (String) phoneticObj.get("audio");
-                }
-                if(audio != null){
-                    runAudio(audio);
-                }
-                else{
-                    System.out.println("Audio not found for this word");
+                JSONArray defArray = (JSONArray) index.get("definitions");
+                for (int j = 0; j < defArray.size(); j++) {
+                    JSONObject defObj = (JSONObject) defArray.get(j);
+                    String definitions = (String) defObj.get("definition");
+                    System.out.println("Definition " + (j + 1) + " : " + definitions);
+
                 }
             }
-            } catch (ParseException e) {
-            throw new RuntimeException(e);
-            }
-        }
-
-    public static void runAudio(String audio){
-        try {
-            URL audioURL = new URL(audio);
-            InputStream inputStream = audioURL.openStream();
-            BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
-            Player player = new Player(bufferedInputStream);
-            player.play();
-        } catch (IOException | JavaLayerException e) {
+        } catch (ParseException e) {
             throw new RuntimeException(e);
         }
-
     }
 }
 
